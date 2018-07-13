@@ -1,0 +1,31 @@
+;Do not modify this file!!!
+Easy Code 1.07.0.0009
+Begin ECProject = cat
+  EasyCodeProject=0
+  FileType=3
+  Processor=.486
+  Align=4
+  DebugInfo=0
+  AsmFiles=0
+  GlobalVariables=1
+  MLOptions=/X /nologo /c /coff /Cp /Zp4
+  LinkOptions=
+  MMXOptions=0
+  CommonControls=0
+  RichEdit=0
+  PackFile=0
+  Macros=0
+  ECMacros=1
+  Unicode=0
+  Masm32Unicode=0
+  StartupWindow=cat
+  Title=Easy Code Masm classic project
+  Resources=cat.ecr
+  Module=cat.asm
+  Include=Kernel32.inc
+  Include=User32.inc
+  Include=masm32.inc
+  Library=Kernel32.lib
+  Library=User32.lib
+  Library=masm32.lib
+End
