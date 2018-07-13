@@ -15,10 +15,12 @@
 
 ### .. Setup
 
-* Place the _Office.exe_ sample in a folder
+* Place the _cat.exe_ sample in a folder
 * Set the workingfolder for _mona_ `!mona config -set workingdirectory C:\path\to\sample` (Enter this command in the textbox, in the bottom, of _Immunity_.)
 
 """
+
+# This script generates the README.md file...
 
 import re
 

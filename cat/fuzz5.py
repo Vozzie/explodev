@@ -5,7 +5,7 @@
  * Load shellcode from a file and generate an exploit.
  * Because the stack might change in later versions,
    a nop sled will be prepended and the address will point to the middle nop.
- * The payload must be in hex format.
+ * The payload must be in hex format. (use payload_run_notepad.msfv for a payload)
 
 ### .. Test 1
 

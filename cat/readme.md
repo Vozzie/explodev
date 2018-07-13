@@ -13,7 +13,7 @@
 
 ### .. Setup
 
-* Place the _Office.exe_ sample in a folder
+* Place the _cat.exe_ sample in a folder
 * Set the workingfolder for _mona_ `!mona config -set workingdirectory C:\path\to\sample` (Enter this command in the textbox, in the bottom, of _Immunity_.)
 ---
 ## `fuzz1.py`
@@ -283,7 +283,7 @@ with open('pattern.dat', 'w') as f:
  * Load shellcode from a file and generate an exploit.
  * Because the stack might change in later versions,
    a nop sled will be prepended and the address will point to the middle nop.
- * The payload must be in hex format.
+ * The payload must be in hex format. (use payload_run_notepad.msfv for a payload)
 
 ### .. Test 1
 
@@ -422,7 +422,9 @@ args.payload.close()
 args.exploit.close()
 ```
 ---
-## `exploit.py`
+## `exploit.py`
+
+> ***This is the final exploit generation script for `cat.exe`.***
 ### .. Code for `exploit.py`
 ```python
 def main():
