@@ -27,9 +27,9 @@
 
  * What caused our address at offset 1028 to be executed?
  
-   a. Writing an address to the stack which is used in a call instruction.
-   b. Writing an address to the stack which is a return address.
-   c. Writing code to the stack that further executes the stack.
+   1. Writing an address to the stack which is used in a call instruction.
+   2. Writing an address to the stack which is a return address.
+   3. Writing code to the stack that further executes the stack.
 
 ### .. Conclusion
 
