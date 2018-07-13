@@ -11,7 +11,7 @@
  * Profit!
  
 ```
-> fuzz3.py
+> fuzz4.py
 > ImmunityDebugger.exe cat.exe pattern.dat
 ```
  
@@ -37,7 +37,7 @@
  * It's possible to write code to the stack which is executed.
 
 > This leaves us with 1028 bytes for a payload to weaponize this exploit.
-  See `exploit_cat.py`
+  See `fuzz5.py` which will use a payload.
 
 """
 

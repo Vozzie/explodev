@@ -17,7 +17,7 @@ ddc6d97424f4bebb27ecb25d29c9b13431751883edfc0375afc5194e278be ...... ecfbab8afa5
 
  * Test
 ```
-> exploit.py payload.dat [exploit.dat]
+> fuzz5.py payload_run_notepad.msfv
 > ImmunityDebugger.exe cat.exe exploit.dat
 ```
 
