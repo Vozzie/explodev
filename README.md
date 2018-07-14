@@ -1,11 +1,11 @@
 
 # Exploit Development Testing
 
-## [cat](cat)
+## [cat.exe](cat)
 
 * Stack buffer overflow tutorial
 
-## TODO: [office](office)
+## TODO: [office.exe](office)
 
-* TODO: Stack overflow exception tutorial
+* TODO: Stack buffer overflow tutorial
 
