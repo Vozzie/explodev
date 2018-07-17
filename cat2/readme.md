@@ -203,12 +203,12 @@ getip:
     ; ...
 ```
 * Now we're at the next label where the word index out the index table is moved into DX.
-* The high bits, 0x8080 are removed with the AND.
+* The high bits, `0x8080` are removed with the AND.
 * The seven high bits are shifted one to right, because the two bytes contain seven bits.
 * If one bit was shifted out the carry flag is set, and JB jumps to carry
-* Where the OR sets the high bit of the low byte of the word index, then jumped back to carried.
-* After which the encoded byte is decoded with the and operation.
-* Loop decrements ECX with one and jumps to next until ECX is zero.
+* Where the OR sets the high bit of the low byte of the word index, then jumped back to the carried label.
+* After which the encoded byte is decoded with the AND operation.
+* Loop decrements ECX with one and jumps to the next label if ECX is not zero.
 * Now a JMP to the decoded payload, where EDI points to, is made.
 ```asm
     ; ...
@@ -230,6 +230,7 @@ carried:
 
 ### .. Port to ruby
 
+> To use the code in metasploit a port will be made later.
 
 ---
 ##  References
