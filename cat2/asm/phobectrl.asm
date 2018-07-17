@@ -82,7 +82,16 @@ popip:
 	Neg Ecx
 	Shr Ecx, 1
 
-	; Eax = 0
+	; Ax = 07F7FH
+	Xor Eax, Eax
+	Dec Eax
+	Shr Al, 1
+	Shr Ah, 1
+
+	;Xor Eax, Eax
+	;Sub Eax, 080808080H
+
+	; Ecx = 0
 	Xor Edx, Edx
 
 next:
@@ -91,7 +100,8 @@ next:
 	Mov Dx, Word Ptr [Esi + Ecx * 2 - 2]
 
 	; Remove bits
-	And Dx, 07F7FH
+	;And Dx, 07F7FH
+	And Dx, Ax
 
 	; Seven upper bits
 	Shr Dh, 1
@@ -105,7 +115,8 @@ next:
 carried:
 
 	; Decode byte
-	And Byte Ptr [Edi + Edx], 07FH
+	;And Byte Ptr [Edi + Edx], 07FH
+	And Byte Ptr [Edi + Edx], Ah
 
 	; Decode next
 	Loop next
@@ -370,7 +381,7 @@ start:
 	Call VirtualProtect
 
 	; Break
-	Int 3
+;	Int 3
 
 	; Goto decoder
 	Jmp decoder

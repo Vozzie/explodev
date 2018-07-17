@@ -100,55 +100,132 @@ Error: No valid set instruction could be created!
 
 ### .. Creating an encoder
 
+* To avoid characters under value 32 those bytes are encoded in the payload with an or operation
+  `if c < 32: c = c |= 0x80`
+* The index of those encoded bytes are encoded and stored in word (2 byte) values in a table (an array).
+  	`high = (index & 0x3F80) >> 7`
+	`low = (index & 0x7F) << 8`
+	`index = high | low | 0x8080`
+* The new payload has the following format
+
+| ***`0x19E000`*** | 
+|:-:|
+| ***...*** | 
+| ***decode stub*** | 
+| ***index table*** | 
+| ***encoded payload*** | 
+| ***...*** | 
+| ***`0x1A0000`*** |
+
+> Note: The character `ESC 0x7F` isn't encoded in the current version. There's a version already in the test project.
 
 ### .. Creating a decoder
 
+There are two different decoder stubs depending on the size of the index table.
+
 * 56 byte decoder stub
-```
-000 | EB 31         | JMP SHORT 033 (getip)
-002 | 80CA 80       | OR DL, 80
-005 | EB 24         | JMP SHORT 02B (carried)
-007 | 5E            | POP ESI
-008 | B9 BAAAFFFF   | MOV ECX, FFFFAABA
-00D | 81E1 BAAAFFFF | AND ECX, FFFFAABA
-013 | 8BFE          | MOV EDI, ESI
-015 | 2BF9          | SUB EDI, ECX
-017 | F7D9          | NEG ECX
-019 | D1E9          | SHR ECX, 1
-01B | 33D2          | XOR EDX, EDX
-01D | 66:8B544E FE  | MOV DX, WORD PTR [ESI + ECX * 2 - 2]
-022 | 66:81E2 7F7F  | AND DX, 7F7F
-027 | D0EE          | SHR DH, 1
-029 | 72 D7         | JB SHORT 002 (carry)
-02B | 80243A 7F     | AND BYTE PTR [EDX + EDI], 7F
-02F | E2 EC         | LOOPD SHORT 01D (next)
-031 | FFE7          | JMP EDI
-033 | E8 CFFFFFFF   | CALL 007 (popip)
-038
+```asm
+JMP SHORT 033 ; (getip)              ; 000 | EB 31        
+OR DL, 80                            ; 002 | 80CA 80      
+JMP SHORT 02B ; (carried)            ; 005 | EB 24        
+POP ESI                              ; 007 | 5E           
+MOV ECX, FFFFAABA                    ; 008 | B9 BAAAFFFF  
+AND ECX, FFFFAABA                    ; 00D | 81E1 BAAAFFFF
+MOV EDI, ESI                         ; 013 | 8BFE         
+SUB EDI, ECX                         ; 015 | 2BF9         
+NEG ECX                              ; 017 | F7D9         
+SHR ECX, 1                           ; 019 | D1E9         
+XOR EDX, EDX                         ; 01B | 33D2         
+MOV DX, WORD PTR [ESI + ECX * 2 - 2] ; 01D | 66:8B544E FE 
+AND DX, 7F7F                         ; 022 | 66:81E2 7F7F 
+SHR DH, 1                            ; 027 | D0EE         
+JB SHORT 002 ; (carry)               ; 029 | 72 D7        
+AND BYTE PTR [EDX + EDI], 7F         ; 02B | 80243A 7F    
+LOOPD SHORT 01D ; (next)             ; 02F | E2 EC        
+JMP EDI                              ; 031 | FFE7         
+CALL 007 ; (popip)                   ; 033 | E8 CFFFFFFF  
+                                     ; 038
 ```
 * 52 byte decoder stub
+```asm
+JMP SHORT 02F ; (getip)              ; 000 | EB 2D         
+OR DL, 80                            ; 002 | 80CA 80       
+JMP SHORT 027 ; (carried)            ; 005 | EB 20         
+POP ESI                              ; 007 | 5E            
+MOV ECX, FFFFAABA                    ; 008 | B9 BAAAFFFF   
+MOV EDI, ESI                         ; 00D | 8BFE          
+SUB EDI, ECX                         ; 00F | 2BF9          
+NEG ECX                              ; 011 | F7D9          
+SHR ECX, 1                           ; 013 | D1E9          
+XOR EDX, EDX                         ; 015 | 33D2          
+MOV DX, WORD PTR [ESI + ECX * 2 - 2] ; 017 | 66:8B544E FE  
+AND DX, 7F7F                         ; 01C | 66:81E2 7F7F  
+SHR DH, 1                            ; 021 | D0EE          
+JB SHORT 002 ; (carry)               ; 023 | 72 DD         
+NOP                                  ; 025 | 90            
+NOP                                  ; 026 | 90            
+AND BYTE PTR [EDX + EDI], 7F         ; 027 | 80243A 7F     
+LOOPD SHORT 017 ; (next)             ; 02B | E2 EA         
+JMP EDI                              ; 02D | FFE7          
+CALL 007 ; (popip)                   ; 02F | E8 D3FFFFFF   
+                                     ; 034
 ```
-000 | EB 2D         | JMP SHORT 02F (getip)
-002 | 80CA 80       | OR DL, 80
-005 | EB 20         | JMP SHORT 027 (carried)
-007 | 5E            | POP ESI
-008 | B9 BAAAFFFF   | MOV ECX, FFFFAABA
-00D | 8BFE          | MOV EDI, ESI
-00F | 2BF9          | SUB EDI, ECX
-011 | F7D9          | NEG ECX
-013 | D1E9          | SHR ECX, 1
-015 | 33D2          | XOR EDX, EDX
-017 | 66:8B544E FE  | MOV DX, WORD PTR [ESI + ECX * 2 - 2]
-01C | 66:81E2 7F7F  | AND DX, 7F7F
-021 | D0EE          | SHR DH, 1
-023 | 72 DD         | JB SHORT 002 (carry)
-025 | 90            | NOP
-026 | 90            | NOP
-027 | 80243A 7F     | AND BYTE PTR [EDX + EDI], 7F
-02B | E2 EA         | LOOPD SHORT 017 (next)
-02D | FFE7          | JMP EDI
-02F | E8 D3FFFFFF   | CALL 007 (popip)
-034
+
+### .. Breakdown of decoder
+
+* The first that is executed is to get the address of current code or "instruction pointer" (getip). First a JMP is made to a CALL instruction near the index table. The CALL near the index table is convenient because CALL pushes the address after the instruction which is the address of the index table. So the address of the index table is popped into ESI.
+* The JMP instructions are done to safe distances (>= 32) to avoid control characters.
+```asm
+    JMP getip
+    ; ...
+popip:
+    POP ESI
+    ; ...
+getip:
+    CALL popip
+    ; index table
+    ; encoded payload
+```
+* The negative size of the index table is moved into ECX.
+* The AND is optional (long version) when the negative size contains control chars. 
+* The table offset in ESI is moved to EDI, and the negative table size is subtracted from EDI. This is the same as adding the table size to EDI. Now EDI points to the encoded payload.
+* Now the table byte size in ECX is turned positive with NEG and converted into the table element length by shifting right with SHR.
+* EDX is set to zero with XOR.
+```asm
+    ; ...
+    MOV ECX, FFFFAABA
+    AND ECX, FFFFAABA
+    MOV EDI, ESI
+    SUB EDI, ECX
+    NEG ECX
+    SHR ECX, 1
+    XOR EDX, EDX
+    ; ...
+```
+* Now we're at the next label where the word index out the index table is moved into DX.
+* The high bits, 0x8080 are removed with the AND.
+* The seven high bits are shifted one to right, because the two bytes contain seven bits.
+* If one bit was shifted out the carry flag is set, and JB jumps to carry
+* Where the OR sets the high bit of the low byte of the word index, then jumped back to carried.
+* After which the encoded byte is decoded with the and operation.
+* Loop decrements ECX with one and jumps to next until ECX is zero.
+* Now a JMP to the decoded payload, where EDI points to, is made.
+```asm
+    ; ...
+carry:
+    OR DL, 80
+    JMP carried
+    ; ...
+next:
+    MOV DX, WORD PTR [ESI + ECX * 2 - 2]
+    AND DX, 7F7F
+    SHR DH, 1
+    JB carry
+carried:
+    AND BYTE PTR [EDX + EDI], 7F
+    LOOPD next
+    JMP EDI
+    ; ...
 ```
 
 ### .. Port to ruby
