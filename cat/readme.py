@@ -11,7 +11,8 @@
 * [Mona.py](https://github.com/corelan/mona) (Place the mona script in the PyCommands folder of Immunity Debugger)
 * [MsfVenom](https://www.offensive-security.com/metasploit-unleashed/msfvenom/)
   (Part of Kali Linux)
-* [Python](https://www.python.org)
+* [Python 2.7](https://www.python.org)
+* "Optional" ***Use a Virtual Machine***
 
 ### .. Setup
 
